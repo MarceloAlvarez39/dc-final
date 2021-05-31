@@ -14,88 +14,210 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// GreeterClient is the client API for Greeter service.
+// GreetingClient is the client API for Greeting service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type GreeterClient interface {
+type GreetingClient interface {
 	// Sends a greeting
 	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
 }
 
-type greeterClient struct {
+type greetingClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewGreeterClient(cc grpc.ClientConnInterface) GreeterClient {
-	return &greeterClient{cc}
+func NewGreetingClient(cc grpc.ClientConnInterface) GreetingClient {
+	return &greetingClient{cc}
 }
 
-func (c *greeterClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
+func (c *greetingClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
 	out := new(HelloReply)
-	err := c.cc.Invoke(ctx, "/proto.Greeter/SayHello", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/proto.Greeting/SayHello", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// GreeterServer is the server API for Greeter service.
-// All implementations must embed UnimplementedGreeterServer
+// GreetingServer is the server API for Greeting service.
+// All implementations must embed UnimplementedGreetingServer
 // for forward compatibility
-type GreeterServer interface {
+type GreetingServer interface {
 	// Sends a greeting
 	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
-	mustEmbedUnimplementedGreeterServer()
+	mustEmbedUnimplementedGreetingServer()
 }
 
-// UnimplementedGreeterServer must be embedded to have forward compatible implementations.
-type UnimplementedGreeterServer struct {
+// UnimplementedGreetingServer must be embedded to have forward compatible implementations.
+type UnimplementedGreetingServer struct {
 }
 
-func (UnimplementedGreeterServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
+func (UnimplementedGreetingServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
 }
-func (UnimplementedGreeterServer) mustEmbedUnimplementedGreeterServer() {}
+func (UnimplementedGreetingServer) mustEmbedUnimplementedGreetingServer() {}
 
-// UnsafeGreeterServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to GreeterServer will
+// UnsafeGreetingServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to GreetingServer will
 // result in compilation errors.
-type UnsafeGreeterServer interface {
-	mustEmbedUnimplementedGreeterServer()
+type UnsafeGreetingServer interface {
+	mustEmbedUnimplementedGreetingServer()
 }
 
-func RegisterGreeterServer(s grpc.ServiceRegistrar, srv GreeterServer) {
-	s.RegisterService(&Greeter_ServiceDesc, srv)
+func RegisterGreetingServer(s grpc.ServiceRegistrar, srv GreetingServer) {
+	s.RegisterService(&Greeting_ServiceDesc, srv)
 }
 
-func _Greeter_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Greeting_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HelloRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GreeterServer).SayHello(ctx, in)
+		return srv.(GreetingServer).SayHello(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/proto.Greeter/SayHello",
+		FullMethod: "/proto.Greeting/SayHello",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GreeterServer).SayHello(ctx, req.(*HelloRequest))
+		return srv.(GreetingServer).SayHello(ctx, req.(*HelloRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Greeter_ServiceDesc is the grpc.ServiceDesc for Greeter service.
+// Greeting_ServiceDesc is the grpc.ServiceDesc for Greeting service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Greeter_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.Greeter",
-	HandlerType: (*GreeterServer)(nil),
+var Greeting_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.Greeting",
+	HandlerType: (*GreetingServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SayHello",
-			Handler:    _Greeter_SayHello_Handler,
+			Handler:    _Greeting_SayHello_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "proto/helloworld.proto",
+}
+
+// FiltersClient is the client API for Filters service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type FiltersClient interface {
+	GrayScale(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilterReply, error)
+	Blur(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilterReply, error)
+}
+
+type filtersClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewFiltersClient(cc grpc.ClientConnInterface) FiltersClient {
+	return &filtersClient{cc}
+}
+
+func (c *filtersClient) GrayScale(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilterReply, error) {
+	out := new(FilterReply)
+	err := c.cc.Invoke(ctx, "/proto.Filters/GrayScale", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *filtersClient) Blur(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilterReply, error) {
+	out := new(FilterReply)
+	err := c.cc.Invoke(ctx, "/proto.Filters/Blur", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// FiltersServer is the server API for Filters service.
+// All implementations must embed UnimplementedFiltersServer
+// for forward compatibility
+type FiltersServer interface {
+	GrayScale(context.Context, *FilterRequest) (*FilterReply, error)
+	Blur(context.Context, *FilterRequest) (*FilterReply, error)
+	mustEmbedUnimplementedFiltersServer()
+}
+
+// UnimplementedFiltersServer must be embedded to have forward compatible implementations.
+type UnimplementedFiltersServer struct {
+}
+
+func (UnimplementedFiltersServer) GrayScale(context.Context, *FilterRequest) (*FilterReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GrayScale not implemented")
+}
+func (UnimplementedFiltersServer) Blur(context.Context, *FilterRequest) (*FilterReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Blur not implemented")
+}
+func (UnimplementedFiltersServer) mustEmbedUnimplementedFiltersServer() {}
+
+// UnsafeFiltersServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to FiltersServer will
+// result in compilation errors.
+type UnsafeFiltersServer interface {
+	mustEmbedUnimplementedFiltersServer()
+}
+
+func RegisterFiltersServer(s grpc.ServiceRegistrar, srv FiltersServer) {
+	s.RegisterService(&Filters_ServiceDesc, srv)
+}
+
+func _Filters_GrayScale_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FilterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FiltersServer).GrayScale(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Filters/GrayScale",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FiltersServer).GrayScale(ctx, req.(*FilterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Filters_Blur_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FilterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FiltersServer).Blur(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.Filters/Blur",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FiltersServer).Blur(ctx, req.(*FilterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Filters_ServiceDesc is the grpc.ServiceDesc for Filters service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Filters_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.Filters",
+	HandlerType: (*FiltersServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GrayScale",
+			Handler:    _Filters_GrayScale_Handler,
+		},
+		{
+			MethodName: "Blur",
+			Handler:    _Filters_Blur_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -14,9 +14,14 @@ import (
 //	defaultName = "world"
 //)
 
+//var schedulerAddress = "50051"
+
 type Job struct {
 	Address string
 	RPCName string
+	Filter  string
+	ImageID string
+	Worker  string //due to change to another type
 }
 
 func schedule(job Job) {
@@ -26,15 +31,22 @@ func schedule(job Job) {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewGreeterClient(conn)
+	c := pb.NewFiltersClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: job.RPCName})
+
+	r, err := c.GrayScale(ctx, &pb.FilterRequest{})
 	if err != nil {
 		log.Fatalf("could not greet: %v", err)
 	}
 	log.Printf("Scheduler: RPC respose from %s : %s", job.Address, r.GetMessage())
+
+	m, err := c.Blur(ctx, &pb.FilterRequest{})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Scheduler: RPC respose from %s : %s", job.Address, m.GetMessage())
 }
 
 func Start(jobs chan Job) error {

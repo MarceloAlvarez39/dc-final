@@ -10,10 +10,10 @@ import (
 
 	pb "github.com/marceloalvarez39/dc-final/proto"
 	"go.nanomsg.org/mangos"
-	"go.nanomsg.org/mangos/protocol/sub"
 	"google.golang.org/grpc"
 
 	// register transports
+	"go.nanomsg.org/mangos/protocol/surveyor"
 	_ "go.nanomsg.org/mangos/transport/all"
 )
 
@@ -23,7 +23,7 @@ var (
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	pb.UnimplementedGreeterServer
+	pb.UnimplementedFiltersServer
 }
 
 var (
@@ -37,10 +37,16 @@ func die(format string, v ...interface{}) {
 	os.Exit(1)
 }
 
-// SayHello implements helloworld.GreeterServer
-func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
-	log.Printf("RPC: Received: %v", in.GetName())
-	return &pb.HelloReply{Message: "Hello " + in.GetName()}, nil
+// GrayScale implements helloworld.Filters
+func (s *server) GrayScale(ctx context.Context, in *pb.FilterRequest) (*pb.FilterReply, error) {
+	log.Printf("RPC: Received: %v", in.GetFilter())
+	return &pb.FilterReply{Message: "Hello " + in.GetFilter()}, nil
+}
+
+// GrayScale implements helloworld.Filters
+func (s *server) Blur(ctx context.Context, in *pb.FilterRequest) (*pb.FilterReply, error) {
+	log.Printf("RPC: Received: %v", in.GetFilter())
+	return &pb.FilterReply{Message: "Hello " + in.GetFilter()}, nil
 }
 
 func init() {
@@ -55,13 +61,13 @@ func joinCluster() {
 	var err error
 	var msg []byte
 
-	if sock, err = sub.NewSocket(); err != nil {
-		die("can't get new sub socket: %s", err.Error())
+	if sock, err = surveyor.NewSocket(); err != nil {
+		die("can't get new survey socket: %s", err.Error())
 	}
 
 	log.Printf("Connecting to controller on: %s", controllerAddress)
 	if err = sock.Dial(controllerAddress); err != nil {
-		die("can't dial on sub socket: %s", err.Error())
+		die("can't dial on survey socket: %s", err.Error())
 	}
 	// Empty byte array effectively subscribes to everything
 	err = sock.SetOption(mangos.OptionSubscribe, []byte(""))
@@ -104,7 +110,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterGreeterServer(s, &server{})
+	pb.RegisterFiltersServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/rand"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -12,15 +13,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/marceloalvarez39/dc-final/controller"
 )
 
-type Workloads struct {
-	WorkloadID     string //"workload_id"
-	Filter         string //"filter"
-	WorkloadName   string //"workload_name"
-	Status         string //"status"
-	RunningJobs    int    //"running_jobs"
-	FilteredImages string //"filtered_images"
+type Workload struct {
+	WorkloadID     string   //"workload_id"
+	Filter         string   //"filter"
+	WorkloadName   string   //"workload_name"
+	Status         string   //"status"
+	RunningJobs    int      //"running_jobs"
+	FilteredImages []string //"filtered_images"
 }
 
 type Images struct {
@@ -98,14 +101,22 @@ func UploadImage(context *gin.Context) {
 
 }
 
+func getImage_Download(context *gin.Context) {
+	//downloads en image
+}
+
+func getWorkloadData(context *gin.Context) {
+	//gets data of a workload
+}
+
 func GetStatus(context *gin.Context) {
 	token := getToken(context.Request.Header.Get("Authorization"))
-	var workloads = ""
 	if user, exists := Users[token]; exists {
 		context.JSON(200, gin.H{
-			"message":          "Hi " + user + ", the DPIP System is Up and Running",
-			"time":             time.Now().Format("2006-01-02 3:4:5"),
-			"Active workloads": "You have " + workloads + ".",
+			"User":             "Hello " + user + ".",
+			"System Name":      "Distributed Parallel Image Processing (DPIP) System",
+			"Server Time":      time.Now().Format("2006-01-02 3:4:5"),
+			"Active Workloads": "You have " + strconv.Itoa(len(controller.Workloads)) + " workloads active.",
 		})
 	} else {
 		context.AbortWithStatusJSON(http.StatusOK, gin.H{
@@ -113,21 +124,73 @@ func GetStatus(context *gin.Context) {
 			"message": "No username registered with the given token. Please check your token and try again or log in",
 		})
 	}
-
 }
 
 func MakeWorkloads(context *gin.Context) {
 	token := getToken(context.Request.Header.Get("Authorization"))
 	if _, exists := Users[token]; exists {
-		var work Workloads
+		var work Workload
 
 		random := rand.New(rand.NewSource(time.Now().UnixNano())).Int()
 		work.WorkloadID = strconv.Itoa(random)
 		work.WorkloadName = context.PostForm("workload_name")
 		work.Filter = context.PostForm("filter")
-	}
 
+		// Check if the name given by the user is already used.
+		available := true
+		for _, w := range controller.Workloads {
+			if w.WorkloadName == work.WorkloadName {
+				available = false
+				break
+			}
+		}
+
+		// If it is available, then we can create the workload
+		if available {
+			if len(controller.Workers) > 0 {
+				work.Status = "running"
+			} else {
+				work.Status = "scheduling"
+			}
+
+			// In order to have certain order in our API, we decided to create folders for the images.
+			// Processed Folder, for the images that have been processed by a filter
+			processedFolder := "images/processed/" + work.WorkloadName + "/"
+			_ = os.MkdirAll(processedFolder, 0755)
+
+			// Not Processed Folder, for the images that haven't been processed by a filter
+			notProcessedFolder := "images/notProcessed/" + work.WorkloadName + "/"
+			_ = os.MkdirAll(notProcessedFolder, 0755)
+
+			newWorkload := controller.Workload{
+				WorkloadID:     work.WorkloadID,
+				Filter:         work.Filter,
+				WorkloadName:   work.WorkloadName,
+				Status:         work.Status,
+				RunningJobs:    0,
+				FilteredImages: []string{},
+			}
+
+			controller.Workloads[fmt.Sprintf("%v", newWorkload.WorkloadID)] = newWorkload
+
+			context.JSON(http.StatusOK, gin.H{
+				"workload_id":     newWorkload.WorkloadID,
+				"filter":          newWorkload.Filter,
+				"workload_name":   newWorkload.WorkloadName,
+				"status":          newWorkload.Status,
+				"running_jobs":    newWorkload.RunningJobs,
+				"filtered_images": newWorkload.FilteredImages,
+			})
+		} else {
+			context.JSON(http.StatusConflict, gin.H{
+				"message": "This workload already exists",
+			})
+		}
+	}
 }
+
+// ----------------------------------- Tools ---------------------------------
+// -----------------------------------------------------------------------------
 
 func getToken(header string) string {
 	re := regexp.MustCompile("<(.*?)>")
@@ -142,14 +205,16 @@ func generateToken(object interface{}) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }
 
-// -------- Main Function ---------------------
+// -------- Start Function ---------------------
 
-func main() {
+func Start() {
 	router := gin.Default()
 	router.POST("/login", GetLogin)
 	router.DELETE("/logout", GetLogout)
 	router.POST("/images", UploadImage)
+	router.GET("/images/{image_id}", getImage_Download)
 	router.GET("/status", GetStatus)
 	router.POST("/workloads", MakeWorkloads)
+	router.GET("workloads/{workloads_id}", getWorkloadData)
 	router.Run(":8080")
 }

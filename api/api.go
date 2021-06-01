@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/rand"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -16,6 +15,9 @@ import (
 
 	"github.com/marceloalvarez39/dc-final/controller"
 )
+
+// ----------------------- STRUCTURES -----------------------------
+// ----------------------------------------------------------------
 
 type Workload struct {
 	WorkloadID     string   //"workload_id"
@@ -32,9 +34,15 @@ type Images struct {
 	ImageType  string
 }
 
+// ------------------------ ENDPOINTS ---------------------
+// ---------------------------------------------------------
+
 var Users = make(map[string]string)
 var PASSWORD = "123"
 
+// The user logs into the DPIP System.
+// The token is created
+// For every endpoint other than this one, the token is requiered.
 func GetLogin(context *gin.Context) {
 	user, password, hasAuth := context.Request.BasicAuth()
 	if password == PASSWORD && hasAuth {
@@ -49,6 +57,8 @@ func GetLogin(context *gin.Context) {
 	}
 }
 
+// The user exits the System.
+// The token is eliminated, as well as the user.
 func GetLogout(context *gin.Context) {
 	token := getToken(context.Request.Header.Get("Authorization"))
 	if user, exists := Users[token]; exists {
@@ -109,6 +119,8 @@ func getWorkloadData(context *gin.Context) {
 	//gets data of a workload
 }
 
+// Gets the status of the system in general.
+// We don't know if the Workloads are printed.
 func GetStatus(context *gin.Context) {
 	token := getToken(context.Request.Header.Get("Authorization"))
 	if user, exists := Users[token]; exists {
@@ -125,6 +137,9 @@ func GetStatus(context *gin.Context) {
 		})
 	}
 }
+
+// Creates the workloads and communicates them to the controller
+// The id is a random number
 
 func MakeWorkloads(context *gin.Context) {
 	token := getToken(context.Request.Header.Get("Authorization"))
@@ -153,19 +168,10 @@ func MakeWorkloads(context *gin.Context) {
 				work.Status = "scheduling"
 			}
 
-			// In order to have certain order in our API, we decided to create folders for the images.
-			// Processed Folder, for the images that have been processed by a filter
-			processedFolder := "images/processed/" + work.WorkloadName + "/"
-			_ = os.MkdirAll(processedFolder, 0755)
-
-			// Not Processed Folder, for the images that haven't been processed by a filter
-			notProcessedFolder := "images/notProcessed/" + work.WorkloadName + "/"
-			_ = os.MkdirAll(notProcessedFolder, 0755)
-
 			newWorkload := controller.Workload{
 				WorkloadID:     work.WorkloadID,
-				Filter:         work.Filter,
 				WorkloadName:   work.WorkloadName,
+				Filter:         work.Filter,
 				Status:         work.Status,
 				RunningJobs:    0,
 				FilteredImages: []string{},
@@ -175,8 +181,8 @@ func MakeWorkloads(context *gin.Context) {
 
 			context.JSON(http.StatusOK, gin.H{
 				"workload_id":     newWorkload.WorkloadID,
-				"filter":          newWorkload.Filter,
 				"workload_name":   newWorkload.WorkloadName,
+				"filter":          newWorkload.Filter,
 				"status":          newWorkload.Status,
 				"running_jobs":    newWorkload.RunningJobs,
 				"filtered_images": newWorkload.FilteredImages,

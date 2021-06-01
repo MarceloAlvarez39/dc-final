@@ -16,6 +16,9 @@ import (
 
 //var schedulerAddress = "50051"
 
+// ----------------------- STRUCTURES -----------------------------
+// ----------------------------------------------------------------
+
 type Job struct {
 	Address string
 	RPCName string
@@ -23,6 +26,9 @@ type Job struct {
 	ImageID string
 	Worker  string //due to change to another type
 }
+
+// ----------------------- CODE -----------------------------
+// ----------------------------------------------------------------
 
 func schedule(job Job) {
 	// Set up a connection to the server.
@@ -54,5 +60,5 @@ func Start(jobs chan Job) error {
 		job := <-jobs
 		schedule(job)
 	}
-	return nil
+
 }

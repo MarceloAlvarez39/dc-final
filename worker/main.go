@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc"
 
 	// register transports
-	"go.nanomsg.org/mangos/protocol/surveyor"
+	"go.nanomsg.org/mangos/protocol/respondent"
 	_ "go.nanomsg.org/mangos/transport/all"
 )
 
@@ -43,7 +43,7 @@ func (s *server) GrayScale(ctx context.Context, in *pb.FilterRequest) (*pb.Filte
 	return &pb.FilterReply{Message: "Hello " + in.GetFilter()}, nil
 }
 
-// GrayScale implements helloworld.Filters
+// Blur implements helloworld.Filters
 func (s *server) Blur(ctx context.Context, in *pb.FilterRequest) (*pb.FilterReply, error) {
 	log.Printf("RPC: Received: %v", in.GetFilter())
 	return &pb.FilterReply{Message: "Hello " + in.GetFilter()}, nil
@@ -61,7 +61,7 @@ func joinCluster() {
 	var err error
 	var msg []byte
 
-	if sock, err = surveyor.NewSocket(); err != nil {
+	if sock, err = respondent.NewSocket(); err != nil { //Here we use respondent.
 		die("can't get new survey socket: %s", err.Error())
 	}
 
